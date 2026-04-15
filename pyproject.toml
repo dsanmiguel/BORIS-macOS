@@ -1,8 +1,11 @@
 [project]
-name = "boris-behav-obs"
-version = "9.10"
-description = "BORIS - Behavioral Observation Research Interactive Software"
-authors = [{ name="Olivier Friard", email="olivier.friard@unito.it" }]
+name = "boris-macos"
+version = "9.10+macos.1"
+description = "BORIS on macOS - Behavioral Observation Research Interactive Software"
+authors = [
+  { name = "Olivier Friard", email = "olivier.friard@unito.it" },
+  { name = "Daniel San Miguel", email = "dasanmiguel@pm.me" }
+]
 readme = "README.md"
 requires-python = ">=3.12"
 license = "GPL-3.0-only"
@@ -11,8 +14,7 @@ classifiers=[
         "Intended Audience :: Science/Research",
         "Intended Audience :: Education",
         "Programming Language :: Python :: 3.12",        
-        "Operating System :: OS Independent",
-        "Topic :: Scientific/Engineering",
+        "Operating System :: macOS",
     ]
 dependencies = [
     "exifread==3.5.1",
@@ -35,13 +37,12 @@ r = ["rpy2>=3.6.1"]
 [project.urls]
 Homepage = "http://www.boris.unito.it"
 Documentation = "https://boris.readthedocs.io/en/latest/"
-Change_log = "https://github.com/olivierfriard/BORIS/wiki/BORIS-change-log-v.8"
-Source_code = "https://github.com/olivierfriard/BORIS"
-Issues = "https://github.com/olivierfriard/BORIS/issues"
+Source_code = "https://github.com/slagathor69/BORIS-MacOS"
+Issues = "https://github.com/slagathor69/BORIS-MacOS/issues"
+Upstream = "https://github.com/olivierfriard/BORIS"
 
 [project.scripts]
-boris-behav-obs = "boris.core:main"
-
+boris-macos = "boris.core:main"
 
 [[tool.uv.index]]
 name = "pypi"

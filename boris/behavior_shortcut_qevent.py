@@ -33,6 +33,8 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
+from . import keyboard_utils
+
 
 class CapturedShortcut:
     """
@@ -143,7 +145,7 @@ class ShortcutDialog(QDialog):
             self.reject()
             return
 
-        modifiers = event.modifiers()
+        modifiers = keyboard_utils.normalize_modifiers(Qt.Key(key), event.modifiers())
         text = event.text()
         has_non_shift_modifier = bool(modifiers & (Qt.KeyboardModifier.ControlModifier | Qt.KeyboardModifier.AltModifier | Qt.KeyboardModifier.MetaModifier))
 
@@ -153,8 +155,7 @@ class ShortcutDialog(QDialog):
             self.shortcutChanged.emit(self._shortcut)
             return
 
-        key_value = int(key) | modifiers.value
-        sequence = QKeySequence(key_value)
+        sequence = keyboard_utils.key_sequence_from_key(Qt.Key(key), modifiers)
 
         if sequence.isEmpty():
             return

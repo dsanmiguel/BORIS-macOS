@@ -101,6 +101,7 @@ from . import (
     events_cursor,
     geometric_measurement,
     gui_utilities,
+    keyboard_utils,
     modifier_coding_map_creator,
     modifiers_coding_map,
     observation_operations,
@@ -1412,13 +1413,19 @@ class MainWindow(QMainWindow, Ui_MainWindow):
 
         logging.debug(f"paused? {flag_paused}")
 
-        if not self.dw_player[player].player.playlist_count:
+        playlist_count = self.dw_player[player].player.playlist_count
+        if not playlist_count:
             return
 
         try:
             # one media
-            if self.dw_player[player].player.playlist_count == 1:
-                if new_time < self.dw_player[player].player.duration:
+            if playlist_count == 1:
+                duration_ = self.dw_player[player].player.duration
+                if duration_ is None:
+                    logging.debug("seek_mediaplayer skipped: media duration is not available yet")
+                    return
+
+                if new_time < duration_:
                     new_time_float = round(float(new_time), 3)
 
                     if player == 0:
@@ -4869,9 +4876,10 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         ):
             return False
 
-        seq = QKeySequence(event.modifiers() | key)
+        normalized_modifiers = keyboard_utils.normalize_modifiers(key, event.modifiers())
+        seq = keyboard_utils.key_sequence_from_key(key, normalized_modifiers)
         has_non_shift_modifier = bool(
-            event.modifiers() & (Qt.KeyboardModifier.ControlModifier | Qt.KeyboardModifier.AltModifier | Qt.KeyboardModifier.MetaModifier)
+            normalized_modifiers & (Qt.KeyboardModifier.ControlModifier | Qt.KeyboardModifier.AltModifier | Qt.KeyboardModifier.MetaModifier)
         )
         text_shortcut = event_text if event_text and len(event_text) == 1 and not has_non_shift_modifier else ""
 
@@ -4946,7 +4954,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
                 return
 
             # check if Ctrl or (Ctrl and KeypadModifier)
-            if event.modifiers() in (
+            if normalized_modifiers in (
                 Qt.KeyboardModifier.ControlModifier,
                 Qt.KeyboardModifier.ControlModifier | Qt.KeyboardModifier.KeypadModifier,
             ):
@@ -5238,8 +5246,9 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             self.update_subject(self.pj[cfg.SUBJECTS][subject_idx][cfg.SUBJECT_NAME])
 
         else:
-            logging.debug(f"Key not assigned ({seq.toString(QKeySequence.SequenceFormat.PortableText)})")
-            self.statusbar.showMessage(f"Key not assigned ({seq.toString(QKeySequence.SequenceFormat.PortableText)})", 5000)
+            portable_text = seq.toString(QKeySequence.SequenceFormat.PortableText)
+            logging.debug(f"Key not assigned ({portable_text})")
+            self.statusbar.showMessage(f"Key not assigned ({portable_text})", 5000)
 
     def tv_events_doubleClicked(self):
         """
@@ -5537,6 +5546,8 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         if self.MPV_IPC_MODE:
             try:
                 for idx, p in enumerate(self.dw_player):
+                    if hasattr(p.player, "close"):
+                        p.player.close()
                     p.player.process.terminate()
                     try:
                         p.player.process.wait(timeout=3)  # wait up to 3s
