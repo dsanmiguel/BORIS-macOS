@@ -37,8 +37,8 @@ r = ["rpy2>=3.6.1"]
 [project.urls]
 Homepage = "http://www.boris.unito.it"
 Documentation = "https://boris.readthedocs.io/en/latest/"
-Source_code = "https://github.com/slagathor69/BORIS-MacOS"
-Issues = "https://github.com/slagathor69/BORIS-MacOS/issues"
+Source_code = "https://github.com/dsanmiguel/BORIS-MacOS"
+Issues = "https://github.com/dsanmiguel/BORIS-MacOS/issues"
 Upstream = "https://github.com/olivierfriard/BORIS"
 
 [project.scripts]
