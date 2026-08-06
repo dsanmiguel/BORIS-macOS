@@ -19,17 +19,18 @@ Copyright 2012-2026 Olivier Friard
   MA 02110-1301, USA.
 """
 
-from decimal import Decimal as dec
-import tablib
-import logging
-import os
-import sys
 import datetime as dt
+import logging
 import math
+import os
 import pathlib
+import sys
+from decimal import Decimal as dec
 from io import StringIO
-import pandas as pd
 from typing import Tuple
+
+import pandas as pd
+import tablib
 
 try:
     import pyreadr
@@ -38,13 +39,9 @@ try:
 except ModuleNotFoundError:
     flag_pyreadr_loaded = False
 
-from . import dialog
 from . import config as cfg
+from . import db_functions, dialog, event_operations, observation_operations, project_functions
 from . import utilities as util
-from . import project_functions
-from . import observation_operations
-from . import db_functions
-from . import event_operations
 
 
 def export_events_jwatcher(
@@ -616,17 +613,20 @@ def dataset_write(dataset: tablib.Dataset, file_name: str, output_format: str, d
 
             return True, ""
 
-        if output_format in (cfg.CSV_EXT, cfg.TSV_EXT, cfg.HTML_EXT):
-            with open(file_name, "wb") as f:
-                f.write(str.encode(dataset.export(output_format)))
-            return True, ""
+        try:
+            if output_format in (cfg.CSV_EXT, cfg.TSV_EXT, cfg.HTML_EXT):
+                with open(file_name, "wb") as f:
+                    f.write(str.encode(dataset.export(output_format)))
+                return True, ""
 
-        if output_format in (cfg.ODS_EXT, cfg.XLS_EXT, cfg.XLSX_EXT):
-            dataset.title = util.safe_xl_worksheet_title(dataset.title, output_format)
+            if output_format in (cfg.ODS_EXT, cfg.XLS_EXT, cfg.XLSX_EXT):
+                dataset.title = util.safe_xl_worksheet_title(dataset.title, output_format)
 
-            with open(file_name, "wb") as f:
-                f.write(dataset.export(output_format))
-            return True, ""
+                with open(file_name, "wb") as f:
+                    f.write(dataset.export(output_format))
+                return True, ""
+        except Exception as e:
+            return False, f"The file {file_name} can not be saved: {e}"
 
         return False, f"Format {output_format} not found"
 
@@ -704,7 +704,7 @@ def export_aggregated_events(pj: dict, parameters: dict, obsId: str, force_numbe
     if not math.isnan(min_time) and not math.isnan(max_time):  # obs with timestamp
         # delete events outside time interval
         cursor.execute(
-            "DELETE FROM aggregated_events WHERE observation = ? AND (start < ? AND stop < ?) OR (start > ? AND stop > ?)",
+            "DELETE FROM aggregated_events WHERE (observation = ?) AND ((start < ? AND stop < ?) OR (start > ? AND stop > ?))",
             (
                 obsId,
                 min_time,
@@ -805,8 +805,14 @@ def export_aggregated_events(pj: dict, parameters: dict, obsId: str, force_numbe
                             if observation[cfg.FILE][player]:
                                 for media_file in observation[cfg.FILE][player]:
                                     media_file_lst.append(media_file)
-                                    fps_lst.append(f"{observation[cfg.MEDIA_INFO][cfg.FPS].get(media_file, cfg.NA):.3f}")
-                                    media_durations_lst.append(f"{observation[cfg.MEDIA_INFO][cfg.LENGTH].get(media_file, cfg.NA):.3f}")
+                                    if media_file in observation[cfg.MEDIA_INFO][cfg.FPS]:
+                                        fps_lst.append(f"{observation[cfg.MEDIA_INFO][cfg.FPS][media_file]:.3f}")
+                                    else:
+                                        fps_lst.append(cfg.NA)
+                                    if media_file in observation[cfg.MEDIA_INFO][cfg.LENGTH]:
+                                        media_durations_lst.append(f"{observation[cfg.MEDIA_INFO][cfg.LENGTH].get(media_file, cfg.NA):.3f}")
+                                    else:
+                                        media_durations_lst.append(cfg.NA)
                                 if player > "1":
                                     media_file_str += "|"
                                     fps_str += "|"

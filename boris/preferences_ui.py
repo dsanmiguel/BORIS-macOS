@@ -285,6 +285,46 @@ class Ui_prefDialog(object):
 
         self.verticalLayout_11.addWidget(self.label_13)
 
+        self.horizontalLayout_official_plugins = QHBoxLayout()
+        self.horizontalLayout_official_plugins.setObjectName(u"horizontalLayout_official_plugins")
+        self.le_official_plugins_dir = QLineEdit(self.layoutWidget)
+        self.le_official_plugins_dir.setObjectName(u"le_official_plugins_dir")
+        self.le_official_plugins_dir.setReadOnly(True)
+
+        self.horizontalLayout_official_plugins.addWidget(self.le_official_plugins_dir)
+
+        self.pb_browse_official_plugins_dir = QPushButton(self.layoutWidget)
+        self.pb_browse_official_plugins_dir.setObjectName(u"pb_browse_official_plugins_dir")
+
+        self.horizontalLayout_official_plugins.addWidget(self.pb_browse_official_plugins_dir)
+
+        self.verticalLayout_11.addLayout(self.horizontalLayout_official_plugins)
+
+        self.horizontalLayout_official_plugins_release = QHBoxLayout()
+        self.horizontalLayout_official_plugins_release.setObjectName(u"horizontalLayout_official_plugins_release")
+        self.label_official_plugins_release = QLabel(self.layoutWidget)
+        self.label_official_plugins_release.setObjectName(u"label_official_plugins_release")
+
+        self.horizontalLayout_official_plugins_release.addWidget(self.label_official_plugins_release)
+
+        self.cb_official_plugins_release = QComboBox(self.layoutWidget)
+        self.cb_official_plugins_release.setObjectName(u"cb_official_plugins_release")
+
+        self.horizontalLayout_official_plugins_release.addWidget(self.cb_official_plugins_release)
+
+        self.pb_refresh_official_plugins_releases = QPushButton(self.layoutWidget)
+        self.pb_refresh_official_plugins_releases.setObjectName(u"pb_refresh_official_plugins_releases")
+
+        self.horizontalLayout_official_plugins_release.addWidget(self.pb_refresh_official_plugins_releases)
+
+        self.pb_download_official_plugins = QPushButton(self.layoutWidget)
+        self.pb_download_official_plugins.setObjectName(u"pb_download_official_plugins")
+
+        self.horizontalLayout_official_plugins_release.addWidget(self.pb_download_official_plugins)
+
+
+        self.verticalLayout_11.addLayout(self.horizontalLayout_official_plugins_release)
+
         self.lv_all_plugins = QListWidget(self.layoutWidget)
         self.lv_all_plugins.setObjectName(u"lv_all_plugins")
 
@@ -307,6 +347,11 @@ class Ui_prefDialog(object):
         self.pb_browse_plugins_dir.setObjectName(u"pb_browse_plugins_dir")
 
         self.horizontalLayout_16.addWidget(self.pb_browse_plugins_dir)
+
+        self.pb_clear_plugins_dir = QPushButton(self.layoutWidget)
+        self.pb_clear_plugins_dir.setObjectName(u"pb_clear_plugins_dir")
+
+        self.horizontalLayout_16.addWidget(self.pb_clear_plugins_dir)
 
 
         self.verticalLayout_11.addLayout(self.horizontalLayout_16)
@@ -756,9 +801,15 @@ class Ui_prefDialog(object):
         self.cb_pause_before_addevent.setText(QCoreApplication.translate("prefDialog", u"Pause media before \"Add event\" command", None))
         self.label_24.setText(QCoreApplication.translate("prefDialog", u"Frame step size", None))
         self.tabWidget.setTabText(self.tabWidget.indexOf(self.tab_observations), QCoreApplication.translate("prefDialog", u"Observations", None))
-        self.label_13.setText(QCoreApplication.translate("prefDialog", u"BORIS plugins", None))
+        self.label_13.setText(QCoreApplication.translate("prefDialog", u"Official BORIS plugins", None))
+        self.pb_browse_official_plugins_dir.setText(QCoreApplication.translate("prefDialog", u"Browse", None))
+        self.label_official_plugins_release.setText(QCoreApplication.translate("prefDialog", u"Release", None))
+        self.pb_refresh_official_plugins_releases.setText(QCoreApplication.translate("prefDialog", u"Load releases", None))
+        self.pb_download_official_plugins.setText(QCoreApplication.translate("prefDialog", u"Download/Update", None))
         self.label_15.setText(QCoreApplication.translate("prefDialog", u"Personal plugins", None))
         self.pb_browse_plugins_dir.setText(QCoreApplication.translate("prefDialog", u"Browse", None))
+        self.pb_clear_plugins_dir.setToolTip(QCoreApplication.translate("prefDialog", u"Clear the personal plugins path without deleting files", None))
+        self.pb_clear_plugins_dir.setText(QCoreApplication.translate("prefDialog", u"Clear", None))
         self.label_14.setText(QCoreApplication.translate("prefDialog", u"Plugin info", None))
         self.label_23.setText(QCoreApplication.translate("prefDialog", u"Plugin code", None))
         self.tabWidget.setTabText(self.tabWidget.indexOf(self.tab_analysis_plugins), QCoreApplication.translate("prefDialog", u"Analysis plugins", None))
@@ -799,4 +850,3 @@ class Ui_prefDialog(object):
         self.pbCancel.setText(QCoreApplication.translate("prefDialog", u"Cancel", None))
         self.pbOK.setText(QCoreApplication.translate("prefDialog", u"OK", None))
     # retranslateUi
-

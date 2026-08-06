@@ -47,14 +47,8 @@ def export_project_as_pickle_object(pj: dict) -> None:
     try:
         with open(file_name, "wb") as f_out:
             pickle.dump(pj, f_out)
-    except Exception:
-        QMessageBox.critical(
-            None,
-            cfg.programName,
-            "Error during file saving.",
-            QMessageBox.Ok | QMessageBox.Default,
-            QMessageBox.NoButton,
-        )
+    except Exception as e:
+        QMessageBox.critical(None, cfg.programName, f"Error during file saving: {e}", QMessageBox.StandardButton.Ok)
 
 
 def export_ethogram(self) -> None:
@@ -284,7 +278,7 @@ def select_behaviors(
                 ]
             ):
                 paramPanelWindow.item = QListWidgetItem(behavior)
-                paramPanelWindow.item.setCheckState(Qt.Unchecked)
+                paramPanelWindow.item.setCheckState(Qt.CheckState.Unchecked)
 
                 if category != "###no category###":
                     paramPanelWindow.item.setData(33, "behavior")
@@ -435,8 +429,8 @@ def load_dataframe_into_behaviors_tablewidget(self, df: pd.DataFrame) -> int:
                     f"{'<br>'.join(['<b>' + x + '</b>' for x in expected_labels])}<br>"
                     "<br>The order is not mandatory."
                 ),
-                QMessageBox.Ok | QMessageBox.Default,
-                QMessageBox.NoButton,
+                QMessageBox.StandardButton.Ok | QMessageBox.StandardButton.Default,
+                QMessageBox.StandardButton.NoButton,
             )
             return 1
 
@@ -463,8 +457,8 @@ def load_dataframe_into_behaviors_tablewidget(self, df: pd.DataFrame) -> int:
                         None,
                         cfg.programName,
                         f"{row['Behavior code']} has no behavior type (POINT or STATE)",
-                        QMessageBox.Ok | QMessageBox.Default,
-                        QMessageBox.NoButton,
+                        QMessageBox.StandardButton.Ok | QMessageBox.StandardButton.Default,
+                        QMessageBox.StandardButton.NoButton,
                     )
                     return 2
 
@@ -525,8 +519,8 @@ def import_behaviors_from_text_file(self):
             None,
             cfg.programName,
             ("The type of file was not recognized. Must be Comma Separated Values (,) or Tab Separated Values"),
-            QMessageBox.Ok | QMessageBox.Default,
-            QMessageBox.NoButton,
+            QMessageBox.StandardButton.Ok | QMessageBox.StandardButton.Default,
+            QMessageBox.StandardButton.NoButton,
         )
         return
 
@@ -537,8 +531,8 @@ def import_behaviors_from_text_file(self):
             None,
             cfg.programName,
             ("The type of file was not recognized. Must be Comma Separated Values (,) or Tab Separated Values"),
-            QMessageBox.Ok | QMessageBox.Default,
-            QMessageBox.NoButton,
+            QMessageBox.StandardButton.Ok | QMessageBox.StandardButton.Default,
+            QMessageBox.StandardButton.NoButton,
         )
         return
 
@@ -578,8 +572,8 @@ def import_behaviors_from_spreadsheet(self):
             None,
             cfg.programName,
             ("The type of file was not recognized. Must be Microsoft-Excel XLSX format or OpenDocument ODS"),
-            QMessageBox.Ok | QMessageBox.Default,
-            QMessageBox.NoButton,
+            QMessageBox.StandardButton.Ok | QMessageBox.StandardButton.Default,
+            QMessageBox.StandardButton.NoButton,
         )
         return
 
@@ -590,8 +584,8 @@ def import_behaviors_from_spreadsheet(self):
             None,
             cfg.programName,
             ("The type of file was not recognized. Must be Microsoft-Excel XLSX format or OpenDocument ODS"),
-            QMessageBox.Ok | QMessageBox.Default,
-            QMessageBox.NoButton,
+            QMessageBox.StandardButton.Ok | QMessageBox.StandardButton.Default,
+            QMessageBox.StandardButton.NoButton,
         )
         return
 
@@ -613,8 +607,8 @@ def import_behaviors_from_clipboard(self):
             None,
             cfg.programName,
             "The clipboard is empty",
-            QMessageBox.Ok | QMessageBox.Default,
-            QMessageBox.NoButton,
+            QMessageBox.StandardButton.Ok | QMessageBox.StandardButton.Default,
+            QMessageBox.StandardButton.NoButton,
         )
         return
 
@@ -642,8 +636,8 @@ def import_behaviors_from_clipboard(self):
                 "The clipboard content does not have a constant number of fields.<br>"
                 "From your spreadsheet: CTRL + A (select all cells), CTRL + C (copy to clipboard)"
             ),
-            QMessageBox.Ok | QMessageBox.Default,
-            QMessageBox.NoButton,
+            QMessageBox.StandardButton.Ok | QMessageBox.StandardButton.Default,
+            QMessageBox.StandardButton.NoButton,
         )
         return
 
@@ -815,8 +809,8 @@ def load_dataframe_into_subjects_tablewidget(self, df: pd.DataFrame) -> int:
                     "Subject name, Description, Key<br>"
                     "The order is not mandatory."
                 ),
-                QMessageBox.Ok | QMessageBox.Default,
-                QMessageBox.NoButton,
+                QMessageBox.StandardButton.Ok | QMessageBox.StandardButton.Default,
+                QMessageBox.StandardButton.NoButton,
             )
             return 1
 
@@ -844,8 +838,8 @@ def import_subjects_from_clipboard(self):
             None,
             cfg.programName,
             "The clipboard is empty",
-            QMessageBox.Ok | QMessageBox.Default,
-            QMessageBox.NoButton,
+            QMessageBox.StandardButton.Ok | QMessageBox.StandardButton.Default,
+            QMessageBox.StandardButton.NoButton,
         )
         return
 
@@ -871,8 +865,8 @@ def import_subjects_from_clipboard(self):
                 "The clipboard content does not have a constant number of fields.<br>"
                 "From your spreadsheet: CTRL + A (select all cells), CTRL + C (copy to clipboard)"
             ),
-            QMessageBox.Ok | QMessageBox.Default,
-            QMessageBox.NoButton,
+            QMessageBox.StandardButton.Ok | QMessageBox.StandardButton.Default,
+            QMessageBox.StandardButton.NoButton,
         )
         return
 
@@ -979,8 +973,8 @@ def import_subjects_from_text_file(self):
             None,
             cfg.programName,
             ("The type of file was not recognized. Must be Comma Separated Values (,) or Tab Separated Values"),
-            QMessageBox.Ok | QMessageBox.Default,
-            QMessageBox.NoButton,
+            QMessageBox.StandardButton.Ok | QMessageBox.StandardButton.Default,
+            QMessageBox.StandardButton.NoButton,
         )
         return
 
@@ -991,8 +985,8 @@ def import_subjects_from_text_file(self):
             None,
             cfg.programName,
             ("The type of file was not recognized. Must be Comma Separated Values (,) or Tab Separated Values"),
-            QMessageBox.Ok | QMessageBox.Default,
-            QMessageBox.NoButton,
+            QMessageBox.StandardButton.Ok | QMessageBox.StandardButton.Default,
+            QMessageBox.StandardButton.NoButton,
         )
         return
 
@@ -1032,8 +1026,8 @@ def import_subjects_from_spreadsheet(self):
             None,
             cfg.programName,
             ("The type of file was not recognized. Must be Microsoft-Excel XLSX format or OpenDocument ODS"),
-            QMessageBox.Ok | QMessageBox.Default,
-            QMessageBox.NoButton,
+            QMessageBox.StandardButton.Ok | QMessageBox.StandardButton.Default,
+            QMessageBox.StandardButton.NoButton,
         )
         return
 
@@ -1044,8 +1038,8 @@ def import_subjects_from_spreadsheet(self):
             None,
             cfg.programName,
             ("The type of file was not recognized. Must be Microsoft-Excel XLSX format or OpenDocument ODS"),
-            QMessageBox.Ok | QMessageBox.Default,
-            QMessageBox.NoButton,
+            QMessageBox.StandardButton.Ok | QMessageBox.StandardButton.Default,
+            QMessageBox.StandardButton.NoButton,
         )
         return
 

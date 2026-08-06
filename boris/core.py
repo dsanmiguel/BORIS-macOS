@@ -101,7 +101,6 @@ from . import (
     events_cursor,
     geometric_measurement,
     gui_utilities,
-    keyboard_utils,
     modifier_coding_map_creator,
     modifiers_coding_map,
     observation_operations,
@@ -827,9 +826,9 @@ class MainWindow(QMainWindow, Ui_MainWindow):
                 ):
                     paramPanelWindow.item = QListWidgetItem(behavior)
                     if behavior in filtered_behaviors:
-                        paramPanelWindow.item.setCheckState(Qt.Checked)
+                        paramPanelWindow.item.setCheckState(Qt.CheckState.Checked)
                     else:
-                        paramPanelWindow.item.setCheckState(Qt.Unchecked)
+                        paramPanelWindow.item.setCheckState(Qt.CheckState.Unchecked)
 
                     if category != "###no category###":
                         paramPanelWindow.item.setData(33, "behavior")
@@ -888,9 +887,9 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         for subject in [self.pj[cfg.SUBJECTS][x][cfg.SUBJECT_NAME] for x in util.sorted_keys(self.pj[cfg.SUBJECTS])]:
             paramPanelWindow.item = QListWidgetItem(subject)
             if subject in filtered_subjects:
-                paramPanelWindow.item.setCheckState(Qt.Checked)
+                paramPanelWindow.item.setCheckState(Qt.CheckState.Checked)
             else:
-                paramPanelWindow.item.setCheckState(Qt.Unchecked)
+                paramPanelWindow.item.setCheckState(Qt.CheckState.Unchecked)
 
             paramPanelWindow.lwBehaviors.addItem(paramPanelWindow.item)
 
@@ -1374,8 +1373,8 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         try:
             with open(temp_zip.name, "wb") as f_out:
                 f_out.write(zip_content)
-        except Exception:
-            QMessageBox.critical(self, cfg.programName, "A problem occurred during saving the new version of BORIS.")
+        except Exception as e:
+            QMessageBox.critical(self, cfg.programName, f"A problem occurred during saving the new version of BORIS.: {e}")
             return
 
         # extract to temp dir
@@ -1413,19 +1412,13 @@ class MainWindow(QMainWindow, Ui_MainWindow):
 
         logging.debug(f"paused? {flag_paused}")
 
-        playlist_count = self.dw_player[player].player.playlist_count
-        if not playlist_count:
+        if not self.dw_player[player].player.playlist_count:
             return
 
         try:
             # one media
-            if playlist_count == 1:
-                duration_ = self.dw_player[player].player.duration
-                if duration_ is None:
-                    logging.debug("seek_mediaplayer skipped: media duration is not available yet")
-                    return
-
-                if new_time < duration_:
+            if self.dw_player[player].player.playlist_count == 1:
+                if new_time < self.dw_player[player].player.duration:
                     new_time_float = round(float(new_time), 3)
 
                     if player == 0:
@@ -1526,13 +1519,18 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             #    self.seek_mediaplayer(dec(0))
             #    return
 
+            playlist_pos = self.dw_player[0].player.playlist_pos
+            playlist_count = self.dw_player[0].player.playlist_count
+            if self.MPV_IPC_MODE:
+                if playlist_pos is None or playlist_count is None:
+                    return
+
             # check if media not first media
-            if self.dw_player[0].player.playlist_pos > 0:
+            if playlist_pos > 0:
                 self.dw_player[0].player.playlist_prev()
 
-            elif self.dw_player[0].player.playlist_count == 1:
+            elif playlist_count == 1:
                 self.seek_mediaplayer(dec(0))
-                # self.statusbar.showMessage("There is only one media file", 5000)
 
         if self.playerType == cfg.IMAGES:
             if len(self.pj[cfg.OBSERVATIONS][self.observationId].get(cfg.DIRECTORIES_LIST, [])) <= 1:
@@ -1568,6 +1566,10 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         if self.playerType == cfg.MEDIA:
             if len(self.pj[cfg.OBSERVATIONS][self.observationId][cfg.FILE][cfg.PLAYER1]) == 1:
                 return
+
+            if self.MPV_IPC_MODE:
+                if self.dw_player[0].player.playlist_pos is None:
+                    return
 
             # check if media not last media
             if self.dw_player[0].player.playlist_pos < self.dw_player[0].player.playlist_count - 1:
@@ -2072,8 +2074,10 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             dh = videoframe.size().height()
 
             # click coordinates in dialog reference frame
-            dx = self.dw_player[player_id].mouse_pos["x"]
-            dy = self.dw_player[player_id].mouse_pos["y"]
+            dx = self.dw_player[player_id].player.mouse_pos["x"]
+            dy = self.dw_player[player_id].player.mouse_pos["y"]
+
+            print(f"{dx=} {dy=}")  # remove before release
 
             # convert to float for operations
             vw = float(vw)
@@ -3761,12 +3765,11 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             old_time = self.dw_player[0].player.time_pos
             for dw in self.dw_player:
                 dw.player.frame_back_step()
-            while (
-                self.dw_player[0].player.time_pos is not None
-                and self.dw_player[0].player.time_pos > 0
-                and self.dw_player[0].player.time_pos == old_time
-            ):
+
+            player_time_pos = self.dw_player[0].player.time_pos
+            while player_time_pos is not None and player_time_pos > 0 and player_time_pos == old_time:
                 time.sleep(0.001)
+                player_time_pos = self.dw_player[0].player.time_pos
 
             self.mpv_timer_out()
 
@@ -4364,13 +4367,16 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         # update observation info
         playlist_length = len(playlist) if playlist else 0
         msg = ""
-        if self.dw_player[0].player.time_pos is not None:  # check if video
-            msg = f"Current media name: <b>{current_media_name}</b> (#{self.dw_player[0].player.playlist_pos + 1} / {playlist_length})<br>"
 
-            msg += (
-                f"Media position: <b>{util.convertTime(self.timeFormat, current_media_time_pos)}</b> / "
-                f"{util.convertTime(self.timeFormat, current_media_duration)} frame: <b>{frame_idx}</b>"
-            )
+        if self.dw_player[0].player.time_pos is not None:  # check if video
+            playlist_pos = self.dw_player[0].player.playlist_pos
+            if playlist_pos is not None:
+                msg = f"Current media name: <b>{current_media_name}</b> (#{playlist_pos + 1} / {playlist_length})<br>"
+
+                msg += (
+                    f"Media position: <b>{util.convertTime(self.timeFormat, current_media_time_pos)}</b> / "
+                    f"{util.convertTime(self.timeFormat, current_media_duration)} frame: <b>{frame_idx}</b>"
+                )
 
             # with time offset
             if self.pj[cfg.OBSERVATIONS][self.observationId][cfg.TIME_OFFSET]:
@@ -4876,15 +4882,14 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         ):
             return False
 
-        normalized_modifiers = keyboard_utils.normalize_modifiers(key, event.modifiers())
-        seq = keyboard_utils.key_sequence_from_key(key, normalized_modifiers)
+        seq = QKeySequence(event.modifiers() | key)
         has_non_shift_modifier = bool(
-            normalized_modifiers & (Qt.KeyboardModifier.ControlModifier | Qt.KeyboardModifier.AltModifier | Qt.KeyboardModifier.MetaModifier)
+            event.modifiers() & (Qt.KeyboardModifier.ControlModifier | Qt.KeyboardModifier.AltModifier | Qt.KeyboardModifier.MetaModifier)
         )
         text_shortcut = event_text if event_text and len(event_text) == 1 and not has_non_shift_modifier else ""
 
+        # manage Undo
         if seq == QKeySequence("Ctrl+Z"):
-            print("Ctrl+Z from keypress")
             event_operations.undo_event_operation(self)
             return
 
@@ -4954,7 +4959,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
                 return
 
             # check if Ctrl or (Ctrl and KeypadModifier)
-            if normalized_modifiers in (
+            if event.modifiers() in (
                 Qt.KeyboardModifier.ControlModifier,
                 Qt.KeyboardModifier.ControlModifier | Qt.KeyboardModifier.KeypadModifier,
             ):
@@ -5003,13 +5008,20 @@ class MainWindow(QMainWindow, Ui_MainWindow):
                 self.next_frame()
                 return
 
+            """
+            print(f"{seq=}")  # remove before release
+            print(f"{seq==QKeySequence(Qt.Key.Key_PageUp)=}")  # remove before release
+            """
+
             # next media file (page up)
-            if seq == QKeySequence("Up"):
+            if seq == QKeySequence(Qt.Key.Key_PageUp):
                 self.next_media_file()
+                return
 
             # previous media file (page down)
-            if seq == QKeySequence("Down"):
+            if seq == QKeySequence(Qt.Key.Key_PageDown):
                 self.previous_media_file()
+                return
 
         if not self.pj[cfg.ETHOGRAM]:
             # QMessageBox.warning(self, cfg.programName, "The ethogram is not configured")
@@ -5246,9 +5258,8 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             self.update_subject(self.pj[cfg.SUBJECTS][subject_idx][cfg.SUBJECT_NAME])
 
         else:
-            portable_text = seq.toString(QKeySequence.SequenceFormat.PortableText)
-            logging.debug(f"Key not assigned ({portable_text})")
-            self.statusbar.showMessage(f"Key not assigned ({portable_text})", 5000)
+            logging.debug(f"Key not assigned ({seq.toString(QKeySequence.SequenceFormat.PortableText)})")
+            self.statusbar.showMessage(f"Key not assigned ({seq.toString(QKeySequence.SequenceFormat.PortableText)})", 5000)
 
     def tv_events_doubleClicked(self):
         """
@@ -5546,8 +5557,6 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         if self.MPV_IPC_MODE:
             try:
                 for idx, p in enumerate(self.dw_player):
-                    if hasattr(p.player, "close"):
-                        p.player.close()
                     p.player.process.terminate()
                     try:
                         p.player.process.wait(timeout=3)  # wait up to 3s

@@ -124,8 +124,6 @@ def close_observation(self):
 
                 if self.MPV_IPC_MODE:
                     try:
-                        if hasattr(player.player, "close"):
-                            player.player.close()
                         player.player.process.terminate()
                         try:
                             player.player.process.wait(timeout=3)  # wait up to 3s
@@ -465,11 +463,12 @@ def coding_time(observations: dict, observations_list: list) -> Tuple[Optional[d
     for obs_id in observations_list:
         observation = observations[obs_id]
         if observation[cfg.EVENTS]:
+            event_times = [dec(str(event[cfg.EVENT_TIME_FIELD_IDX])) for event in observation[cfg.EVENTS]]
             # check if events contain a NA timestamp
-            if [event[cfg.EVENT_TIME_FIELD_IDX] for event in observation[cfg.EVENTS] if event[cfg.EVENT_TIME_FIELD_IDX].is_nan()]:
+            if [event_time for event_time in event_times if event_time.is_nan()]:
                 return dec("NaN"), dec("NaN"), dec("NaN")
-            start_coding_list.append(observation[cfg.EVENTS][0][cfg.EVENT_TIME_FIELD_IDX])
-            end_coding_list.append(observation[cfg.EVENTS][-1][cfg.EVENT_TIME_FIELD_IDX])
+            start_coding_list.append(event_times[0])
+            end_coding_list.append(event_times[-1])
 
     if not start_coding_list:
         start_coding = None
@@ -1330,7 +1329,7 @@ def check_creation_date(self) -> Tuple[int, dict]:
                 "Use the media file date/time instead?"
             )
         )
-        dlg.ptText.moveCursor(QTextCursor.Start)
+        dlg.ptText.moveCursor(QTextCursor.MoveOperation.Start)
         ret = dlg.exec_()
 
         if ret == 1:  #  use file creation time
