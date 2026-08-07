@@ -4,6 +4,19 @@ BORIS (Behavioral Observation Research Interactive Software)
 
 ![BORIS logo](https://github.com/olivierfriard/BORIS/blob/master/boris/icons/logo_boris.png?raw=true)
 
+## About This Fork
+
+This repository is a macOS-focused fork of the BORIS project. It is intended to address macOS-specific issues related to `mpv`, IPC control, and playback behavior.
+
+The goal of this fork is to keep changes as small as possible while improving BORIS on macOS, rather than diverging substantially from upstream. Currently this fork matches official BORIS 9.8.7 exactly as this is latest version that worked without errors on macOS.
+
+If you encounter a problem specific to this fork, please open an issue in this repository and I will do my best to resolve it quickly.
+
+Unless noted otherwise, the documentation below is reproduced from the official BORIS repository:
+https://github.com/olivierfriard/BORIS/
+
+---
+
 BORIS is an easy-to-use event logging software for video/audio coding or live observations.
 
 BORIS is a free and open-source software available for GNU/Linux, Windows and macOS.
@@ -13,7 +26,7 @@ It provides also some analysis tools like time budget and some plotting function
 <!-- The BO-RIS paper has more than [![BORIS citations counter](https://penelope.unito.it/friard/boris_scopus_citations.png) citations](https://www.boris.unito.it/citations) in peer-reviewed scientific publications. -->
 
 
-The BORIS paper has more than 2834 citations in peer-reviewed scientific publications.
+The BORIS paper has more than 2673 citations in peer-reviewed scientific publications.
 
 
 
@@ -35,67 +48,4 @@ See the official [BORIS web site](https://www.boris.unito.it).
 
 
 ![GitHub Repo stars](https://img.shields.io/github/stars/olivierfriard/BORIS?style=flat&label=Stars)
-[![Please Star](https://img.shields.io/badge/⭐-Star%20this%20repo-blue?style=flat-square)](https://github.com/olivierfriard/BORIS/stargazers)
-
-# Documentation
-
-
-
-The [user guide](https://www.boris.unito.it/user_guide/) provides a good starting point for learning how to use BORIS.
-
-Some [video tutorials](https://www.boris.unito.it/video_tutorials/) are available.
-
-
-
-
-
-# Bug reports and feature requests
-
-
-To search for bugs, report them or request a feature, please use the [GitHub issues tracker](https://github.com/olivierfriard/BORIS/issues)
-
-
-
-
-
-# Citing BORIS
-
-
-Please acknowledge and cite the use of this software and its authors when
-results are used in publications or published elsewhere. You can use the
-following BibTex entry
-
-```
-@article {MEE3:MEE312584,
-    author = {Friard, Olivier and Gamba, Marco},
-   title = {BORIS: a free, versatile open-source event-logging software for video/audio coding and live observations},
-   journal = {Methods in Ecology and Evolution},
-   issn = {2041-210X},
-   url = {http://dx.doi.org/10.1111/2041-210X.12584},
-   doi = {10.1111/2041-210X.12584},
-   pages = {1324--1330},
-    year = {2016},
-}
-```
-
-You can also send us a nice postcard! See the [user testimonials](https://www.boris.unito.it/postcards).
-
-
-
-
-
-
-
-
-# Licence
-
-
-This program is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-
-
-Distributed with a [GPL v.3 license](LICENSE.TXT).
-
-Copyright (C) 2012-2025 Olivier Friard
+[![Please Star](https://img.shields.io/badge/
