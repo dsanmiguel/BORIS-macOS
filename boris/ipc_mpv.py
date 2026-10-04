@@ -40,9 +40,13 @@ class IPC_MPV:
     fps: list = []
     _pause: bool = False
 
+    # maximum time in seconds for a response of mpv
+    RESPONSE_TIMEOUT = 5
+
     def __init__(self, socket_path: str = cfg.MPV_SOCKET, parent=None):
         # print(f"{parent=}")
         self.socket_path = socket_path
+        self.log_path = socket_path + ".log"
         self.process = None
         # self.sock = None
         self.init_mpv()
@@ -52,24 +56,39 @@ class IPC_MPV:
         """
         Start mpv process and embed it in the PySide6 application.
         """
-        logger.info("Start mpv ipc process")
-        # print(f"{self.winId()=}")
-        self.process = subprocess.Popen(
-            [
-                "mpv",
-                "--ontop",
-                "--no-border",
-                "--osc=no",  # no on screen commands
-                "--input-ipc-server=" + self.socket_path,
-                # "--wid=" + str(int(self.winId())),  # Embed in the widget
-                "--idle=yes",  # Keeps mpv running with no video
-                "--keep-open=always",
-                "--input-default-bindings=no",
-                "--input-vo-keyboard=no",
-            ],
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
-        )
+        logger.info(f"Start mpv ipc process (mpv messages in {self.log_path})")
+        # The output of mpv must not be sent to a pipe that is never read:
+        # when the pipe buffer is full (64 KB on macOS) mpv blocks and the video freezes.
+        # --quiet: no status line (AV: 00:12:34 / 00:38:30 ...) written every second
+        with open(self.log_path, "w") as log_file:
+            self.process = subprocess.Popen(
+                [
+                    "mpv",
+                    "--ontop",
+                    "--no-border",
+                    "--osc=no",  # no on screen commands
+                    "--quiet",
+                    "--input-ipc-server=" + self.socket_path,
+                    # "--wid=" + str(int(self.winId())),  # Embed in the widget
+                    "--idle=yes",  # Keeps mpv running with no video
+                    "--keep-open=always",
+                    "--input-default-bindings=no",
+                    "--input-vo-keyboard=no",
+                ],
+                stdin=subprocess.DEVNULL,
+                stdout=log_file,
+                stderr=subprocess.STDOUT,
+            )
+
+    def log_tail(self, max_lines: int = 20) -> str:
+        """
+        returns the last messages of mpv
+        """
+        try:
+            with open(self.log_path, errors="replace") as f_in:
+                return "".join(f_in.readlines()[-max_lines:])
+        except OSError:
+            return ""
 
     def send_command(self, command):
         """
@@ -79,26 +98,48 @@ class IPC_MPV:
         try:
             # Create a Unix socket
             with socket.socket(socket.AF_UNIX, socket.SOCK_STREAM) as client:
+                # do not wait forever if mpv is not responding
+                client.settimeout(self.RESPONSE_TIMEOUT)
                 # Connect to the MPV IPC server
                 client.connect(self.socket_path)
                 # Send the JSON command
                 # print(f"{json.dumps(command).encode('utf-8')=}")
                 client.sendall(json.dumps(command).encode("utf-8") + b"\n")
                 # Receive the response
-                response = client.recv(2000)
+                response_data = self._read_response(client)
 
-                # print(f"{response=}")
-                # Parse the response as JSON
-                response_data = json.loads(response.decode("utf-8"))
+                # print(f"{response_data=}")
                 if response_data["error"] != "success":
                     logging.warning(f"send command: {command} response data: {response_data}")
                 # Return the 'data' field which contains the playback position
                 return response_data.get("data")
         except FileNotFoundError:
             logger.critical("Error: Socket file not found.")
+        except TimeoutError:
+            logger.critical(f"mpv did not respond to {command} in {self.RESPONSE_TIMEOUT} s")
         except Exception as e:
             logger.critical(f"An error occurred: {e}")
         return None
+
+    def _read_response(self, client) -> dict:
+        """
+        Read the response of mpv to a command.
+        The messages of mpv are JSON objects separated by newlines and can be split in several packets.
+        The events sent by mpv to all clients (without "error" key) are skipped.
+        """
+        buffer = b""
+        while True:
+            while b"\n" in buffer:
+                line, buffer = buffer.split(b"\n", 1)
+                if not line.strip():
+                    continue
+                message = json.loads(line.decode("utf-8"))
+                if "error" in message:
+                    return message
+            chunk = client.recv(4096)
+            if not chunk:
+                raise ConnectionError("mpv closed the connection")
+            buffer += chunk
 
     @property
     def time_pos(self):

@@ -21,6 +21,7 @@ This file is part of BORIS.
 """
 
 import datetime as dt
+import html
 import logging
 import os
 import subprocess
@@ -166,7 +167,11 @@ def close_observation(self):
         for dw in self.dw_player:
             logging.info("remove dock widget")
             dw.player.log_handler = None
+            dw.release_video_output()
             self.removeDockWidget(dw)
+            # the dock widget is not deleted: without name restoreState() will not show it
+            # instead of the player with the same name of the next observation
+            dw.setObjectName("")
 
             del dw
 
@@ -1841,6 +1846,11 @@ def initialize_new_media_observation(self) -> bool:
         # place 4 players at the top of the main window and 4 at the bottom
         self.addDockWidget(Qt.DockWidgetArea.TopDockWidgetArea if i < 4 else Qt.DockWidgetArea.BottomDockWidgetArea, self.dw_player[-1])
 
+        # share the width of the dock area between the players (a new player is squeezed to its minimum width)
+        # the video widget can not display the video with a null width (macOS)
+        same_area = [dw for dw in self.dw_player if self.dockWidgetArea(dw) == self.dockWidgetArea(self.dw_player[-1])]
+        self.resizeDocks(same_area, [self.width() // len(same_area)] * len(same_area), Qt.Orientation.Horizontal)
+
         self.dw_player[i].setVisible(True)
 
         # for receiving mouse event from frame viewer
@@ -1866,17 +1876,34 @@ def initialize_new_media_observation(self) -> bool:
         self.dw_player[i].fps = {}
 
         if self.MPV_IPC_MODE:
-            while True:
-                r = util.test_mpv_ipc(f"{cfg.MPV_SOCKET}{i}")
-                logging.debug(f"MPV IPC started: {r}")
-                if r:
-                    break
+            # wait for the mpv IPC server (stop if mpv exited or did not start in 10 s)
+            start_time = time.monotonic()
+            while not util.test_mpv_ipc(f"{cfg.MPV_SOCKET}{i}"):
+                if self.dw_player[i].player.process.poll() is not None or time.monotonic() - start_time > 10:
+                    logging.critical(f"The mpv process #{i + 1} did not start")
+                    QMessageBox.critical(
+                        self,
+                        cfg.programName,
+                        (
+                            "The mpv player could not be started.<br><br>"
+                            f"<pre>{html.escape(self.dw_player[i].player.log_tail())}</pre>"
+                            f"mpv messages: {self.dw_player[i].player.log_path}"
+                        ),
+                        QMessageBox.StandardButton.Ok | QMessageBox.StandardButton.Default,
+                        QMessageBox.StandardButton.NoButton,
+                    )
+                    return False
+                time.sleep(0.05)
+            logging.debug("MPV IPC started")
 
             # start timer for activating the main window
             self.main_window_activation_timer = QTimer()
             self.main_window_activation_timer.setInterval(500)
             self.main_window_activation_timer.timeout.connect(self.activate_main_window)
             self.main_window_activation_timer.start()
+
+        # macOS: the video widget must be ready before loading the media files
+        self.dw_player[i].wait_for_video_output()
 
         for mediaFile in self.pj[cfg.OBSERVATIONS][self.observationId][cfg.FILE][n_player]:
             logging.debug(f"media file: {mediaFile}")
@@ -1969,7 +1996,8 @@ def initialize_new_media_observation(self) -> bool:
         # restore video zoom level
         if cfg.ZOOM_LEVEL in self.pj[cfg.OBSERVATIONS][self.observationId][cfg.MEDIA_INFO]:
             self.dw_player[i].player.video_zoom = log2(
-                self.pj[cfg.OBSERVATIONS][self.observationId][cfg.MEDIA_INFO][cfg.ZOOM_LEVEL].get(n_player, 0)
+                # zoom level is stored as 2**video_zoom: 1 if no zoom (0 crashed with players without zoom level)
+                self.pj[cfg.OBSERVATIONS][self.observationId][cfg.MEDIA_INFO][cfg.ZOOM_LEVEL].get(n_player, 1)
             )
 
         # restore video pan

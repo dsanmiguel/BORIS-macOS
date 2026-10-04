@@ -28,6 +28,13 @@ if (sys.platform.startswith("win") or sys.platform.startswith("linux")) and ("-i
     from . import mpv2 as mpv
 else:
     import ipc_mpv
+
+    if sys.platform.startswith("darwin") and ("-i" not in sys.argv) and ("--ipc" not in sys.argv):
+        # macOS: the video is displayed in the BORIS window with libmpv (IPC mode if libmpv is not available)
+        try:
+            from . import video_render_widget
+        except (ImportError, OSError):
+            logging.warning("MPV library not found")
 import config as cfg
 import gui_utilities
 
@@ -103,10 +110,21 @@ class DW_player(QDockWidget):
         self.stack1 = QWidget()
         self.hlayout = QHBoxLayout()
 
-        self.videoframe = QWidget(self)
+        if not parent.MPV_IPC_MODE and sys.platform.startswith("darwin"):
+            # mpv can not draw in a native window of BORIS on macOS
+            self.videoframe = video_render_widget.VideoRenderWidget(self)
+        else:
+            self.videoframe = QWidget(self)
 
         if parent.MPV_IPC_MODE:
             self.player = ipc_mpv.IPC_MPV(socket_path=f"{cfg.MPV_SOCKET}{self.id_}")
+        elif sys.platform.startswith("darwin"):
+            self.player = video_render_widget.EmbeddedMPV(
+                self.videoframe,
+                log_handler=functools.partial(mpv_logger, self.id_),
+                loglevel="debug",
+            )
+            self.player.screenshot_format = "png"
         else:
             self.player = mpv.MPV(
                 wid=str(int(self.videoframe.winId())),
@@ -166,6 +184,21 @@ class DW_player(QDockWidget):
         self.setWidget(self.stack)
 
         self.stack.setCurrentIndex(0)
+
+    def wait_for_video_output(self) -> None:
+        """
+        macOS: wait until the video widget can display the video.
+        Must be done before loading a media file
+        """
+        if hasattr(self.videoframe, "wait_until_ready"):
+            self.videoframe.wait_until_ready()
+
+    def release_video_output(self) -> None:
+        """
+        macOS: free the resources used for displaying the video
+        """
+        if hasattr(self.videoframe, "release_render_context"):
+            self.videoframe.release_render_context()
 
     def volume_slider_moved(self):
         """

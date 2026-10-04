@@ -8,7 +8,23 @@ BORIS (Behavioral Observation Research Interactive Software)
 
 This repository is a macOS-focused fork of the BORIS project. It is intended to address macOS-specific issues related to `mpv`, IPC control, and playback behavior.
 
-The goal of this fork is to keep changes as small as possible while improving BORIS on macOS, rather than diverging substantially from upstream. Currently this fork matches official BORIS 9.8.7 exactly as this is latest version that worked without errors on macOS.
+The goal of this fork is to keep changes as small as possible while improving BORIS on macOS, rather than diverging substantially from upstream. This fork is based on official BORIS 9.13.0 (the fork version 9.13.0.x corresponds to BORIS 9.13.0), with the following macOS changes:
+
+- **Video inside the BORIS window.** The video is displayed in the player panels of the BORIS window (libmpv with the mpv render API and OpenGL) instead of separate mpv windows. Mouse clicks, double-click zoom, Ctrl/Cmd+scroll zoom, Shift+scroll pan, frame extraction and geometric measurements work like on Windows and Linux.
+- **Rearrangeable panels.** The player, events, ethogram and subjects panels can be moved, floated and docked again like on Windows (use *Tools > Lock dockwidgets* to lock them).
+- **No more freezes during scoring in IPC mode.** mpv's output was sent to a pipe that was never read; when the pipe was full mpv stopped and BORIS waited forever. mpv's messages now go to a log file (`/tmp/mpvsocket<N>.log`) and BORIS no longer waits forever for an unresponsive mpv.
+
+### Requirements
+
+Install mpv (which includes libmpv) and FFmpeg with [Homebrew](https://brew.sh):
+
+```
+brew install mpv ffmpeg
+```
+
+If libmpv is not found, BORIS falls back to the previous mode with the video in separate mpv windows (mpv IPC mode). This mode can also be forced with the `--ipc` (`-i`) option.
+
+With hardware decoding (*Preferences > MPV player hardware video decoding* set to `auto` or `auto-safe`) BORIS uses VideoToolbox with copy-back (`auto-copy`), because frame extraction and geometric measurements cannot use the frames of the zero-copy mode.
 
 If you encounter a problem specific to this fork, please open an issue in this repository and I will do my best to resolve it quickly.
 
