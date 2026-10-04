@@ -8,10 +8,12 @@ BORIS (Behavioral Observation Research Interactive Software)
 
 This repository is a macOS-focused fork of the BORIS project. It is intended to address macOS-specific issues related to `mpv`, IPC control, and playback behavior.
 
-The goal of this fork is to keep changes as small as possible while improving BORIS on macOS, rather than diverging substantially from upstream. This fork is based on official BORIS 9.13.0 (the fork version 9.13.0.x corresponds to BORIS 9.13.0), with the following macOS changes:
+The goal of this fork is to keep changes as small as possible while improving BORIS on macOS, rather than diverging substantially from upstream. This fork is based on official BORIS 9.15.0 (the fork version 9.15.0.x corresponds to BORIS 9.15.0), with the following macOS changes:
 
 - **Video inside the BORIS window.** The video is displayed in the player panels of the BORIS window (libmpv with the mpv render API and OpenGL) instead of separate mpv windows. Mouse clicks, double-click zoom, Ctrl/Cmd+scroll zoom, Shift+scroll pan, frame extraction and geometric measurements work like on Windows and Linux.
-- **Rearrangeable panels.** The player, events, ethogram and subjects panels can be moved, floated and docked again like on Windows (use *Tools > Lock dockwidgets* to lock them).
+- **Rearrangeable panels.** The player, events, ethogram, subjects and information panels can be moved, floated and docked again like on Windows (use *Tools > Lock dockwidgets* to lock them).
+- **Arrow keys work for frame-by-frame navigation.** macOS reports the arrow keys with the numeric keypad modifier, so BORIS showed *Key not assigned (Num+Left)* instead of going to the previous / next frame (and Up / Down did not jump backward / forward).
+- **Show / hide columns** of the Ethogram, Subjects and Events panels: right-click on the header of a table (or choose *Configure columns* in the right-click menu of the table) and check / uncheck the columns. The choice is kept when BORIS is restarted.
 - **No more freezes during scoring in IPC mode.** mpv's output was sent to a pipe that was never read; when the pipe was full mpv stopped and BORIS waited forever. mpv's messages now go to a log file (`/tmp/mpvsocket<N>.log`) and BORIS no longer waits forever for an unresponsive mpv.
 
 ### Requirements
